@@ -16,54 +16,67 @@ var connector = new botbuilder.ChatConnector({
 //listening for user inputs
 server.post('/api/messages', connector.listen());
 
-//reply by echoing
-var bot = new botbuilder.UniversalBot(connector, function(session){
-	session.send('You have tapped: %s | [Lenght: %s] ', session.message.text, session.message.text.length)
+// This bot ensures user's profile is up to date.
+var bot = new botbuilder.UniversalBot(connector, [
+    function (session) {
+        //session.beginDialog('ensureProfile', session.userData.profile);
+        session.beginDialog('dinnerOrder', session);
+    },
+    function (session, results) {
+        session.userData.profile = results.response; // Save user profile.
+        session.send(`Hello ${session.userData.profile.name}! I love ${session.userData.profile.company}!`);
+    }
+]);
 
-	//user typing
-	bot.on('typing', function(){
-		session.send('Too late...');
-	});
-
-	bot.on('conversationUpdate', function(message){
-		//user added
-		if (message.membersAdded && message.membersAdded.length > 0) {
-				var membersAdded = message.membersAdded
-				.map(function(x){
-					var isSelf = x.id === message.address.bot.id;
-					return (isSelf ? message.address.bot.name : x.name) || ' ' + '(id=' + x.id + ')'
-				}).join(', ');
-
-				bot.send(new botbuilder.Message()
-					.address(message.address)
-					.text('Welcome user ' + membersAdded));
-		}
-
-		//user removed
-		if (message.membersRemoved && message.membersRemoved.length > 0) {
-				var membersRemoved = message.membersRemoved
-				.map(function(x){
-					var isSelf = x.id === message.address.bot.id;
-					return (isSelf ? message.address.bot.name : x.name) || ' ' + '(id=' + x.id + ')'
-				}).join(', ');
-
-				bot.send(new botbuilder.Message()
-					.address(message.address)
-					.text('Good bye user ' + membersRemoved));
-		}
-	});
-
-	bot.on('contactRelationUpdate', message => {
-		//bot added
-        if (message.action && message.action === 'add') {
-            bot.send(new botbuilder.Message().address(message.address).text('Welcome bot ' + message.address.id));
+bot.dialog('ensureProfile', [
+    function (session, args, next) {
+        session.dialogData.profile = args || {}; // Set the profile or create the object.
+        if (!session.dialogData.profile.name) {
+            botbuilder.Prompts.text(session, "What's your name?");
+        } else {
+            next(); // Skip if we already have this info.
         }
-        //bot removed
-        if (message.action && message.action === 'remove') {
-            bot.send(new botbuilder.Message().address(message.address).text('Good bye bot ' + message.address.id));
+    },
+    function (session, results, next) {
+        if (results.response) {
+            // Save user's name if we asked for it.
+            session.dialogData.profile.name = results.response;
         }
-	});
-});
+        if (!session.dialogData.profile.company) {
+            botbuilder.Prompts.text(session, "What company do you work for?");
+        } else {
+            next(); // Skip if we already have this info.
+        }
+    },
+    function (session, results) {
+        if (results.response) {
+            // Save company name if we asked for it.
+            session.dialogData.profile.company = results.response;
+        }
+        session.endDialogWithResult({ response: session.dialogData.profile });
+    }
+]);
+
+bot.dialog('dinnerOrder', [
+    (session) => {
+        botbuilder.Prompts.text(session, "Hello... What's your name?");
+    },
+    (session, results) => {
+        session.userData.name = results.response;
+        botbuilder.Prompts.time(session, "Hi " + results.response + ", when do you want to make a reservation ?");
+    },
+    (session, results) => {
+        session.userData.coding = results.response;
+        botbuilder.Prompts.text(session, "Hello... What's your name?");
+        //botbuilder.Prompts.choice(session, "What language do you code Node using?", ["JavaScript", "CoffeeScript", "TypeScript"]);
+    },
+    (session, results) => {
+        session.userData.language = results.response.entity;
+        session.send("Got it... " + session.userData.name +
+            " you've been programming for " + session.userData.coding +
+            " years and use " + session.userData.language + ".");
+    }
+]);
 
 
 
