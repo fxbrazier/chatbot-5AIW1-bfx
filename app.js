@@ -1,5 +1,6 @@
 var restify = require('restify');
 var botbuilder = require('botbuilder');
+var reservation = require('./reservation');
 
 //setup restify server
 var server = restify.createServer();
@@ -20,15 +21,17 @@ server.post('/api/messages', connector.listen());
 var bot = new botbuilder.UniversalBot(connector, [
     function (session) {
         //session.beginDialog('ensureProfile', session.userData.profile);
-        session.beginDialog('dinnerOrder', session);
-    },
+        session.beginDialog('reservation:reservationHostel');
+    }/*,
     function (session, results) {
         session.userData.profile = results.response; // Save user profile.
         session.send(`Hello ${session.userData.profile.name}! I love ${session.userData.profile.company}!`);
-    }
+    }*/
 ]);
 
-bot.dialog('ensureProfile', [
+bot.library(reservation);
+
+/*bot.dialog('ensureProfile', [
     function (session, args, next) {
         session.dialogData.profile = args || {}; // Set the profile or create the object.
         if (!session.dialogData.profile.name) {
@@ -55,9 +58,9 @@ bot.dialog('ensureProfile', [
         }
         session.endDialogWithResult({ response: session.dialogData.profile });
     }
-]);
+]);*/
 
-bot.dialog('dinnerOrder', [
+/*bot.dialog('dinnerOrder', [
     (session) => {
         botbuilder.Prompts.text(session, "Hello... What's your name?");
     },
@@ -76,7 +79,7 @@ bot.dialog('dinnerOrder', [
             " you've been programming for " + session.userData.coding +
             " years and use " + session.userData.language + ".");
     }
-]);
+]);*/
 
 
 
