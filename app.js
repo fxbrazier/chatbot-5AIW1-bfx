@@ -110,8 +110,6 @@ bot.dialog("mainMenu", [
     }
 ])
 .triggerAction({
-    // The user can request this at any time.
-    // Once triggered, it clears the stack and prompts the main menu again.
     matches: /^main menu$/i,
     confirmPrompt: "This will cancel your request. Are you sure?"
 });
@@ -134,7 +132,6 @@ bot.dialog('createAlarm', [
             session.dialogData.time = botbuilder.EntityRecognizer.resolveTime([results.response]);
         }
 
-        // Return alarm to caller  
         if (session.dialogData.name && session.dialogData.time) {
         	session.dialogData.alarm.name = session.dialogData.name;
         	session.dialogData.alarm.time = session.dialogData.time;
@@ -151,14 +148,14 @@ bot.dialog('createAlarm', [
     "restartCreateAlarm", "Ok. Let's start over.",
     {
         matches: /^start over$/i,
-        confirmPrompt: "This wil cancel your alarm Are you sure?"
+        confirmPrompt: "This wil cancel your request. Are you sure?"
     }
 )
 .cancelAction(
     "cancelCreateAlarm", "Type 'Main Menu' to continue.", 
     {
         matches: /^cancel$/i,
-        confirmPrompt: "This will cancel youralarm. Are you sure?"
+        confirmPrompt: "This will cancel your request. Are you sure?"
     }
 );
 
@@ -184,14 +181,14 @@ bot.dialog('showAlarm', [
     "restartShowAlarm", "Ok. Let's start over.",
     {
         matches: /^start over$/i,
-        confirmPrompt: "This wil cancel your alarm. Are you sure?"
+        confirmPrompt: "This wil cancel your request. Are you sure?"
     }
 )
 .cancelAction(
     "cancelShowAlarm", "Type 'Main Menu' to continue.", 
     {
         matches: /^cancel$/i,
-        confirmPrompt: "This will cancel your alarm. Are you sure?"
+        confirmPrompt: "This will cancel your request. Are you sure?"
     }
 );
 
