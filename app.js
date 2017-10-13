@@ -147,7 +147,20 @@ bot.dialog('createAlarm', [
             });
         }
     }
-]);
+]).reloadAction(
+    "restartCreateAlarm", "Ok. Let's start over.",
+    {
+        matches: /^start over$/i,
+        confirmPrompt: "This wil cancel your alarm Are you sure?"
+    }
+)
+.cancelAction(
+    "cancelCreateAlarm", "Type 'Main Menu' to continue.", 
+    {
+        matches: /^cancel$/i,
+        confirmPrompt: "This will cancel youralarm. Are you sure?"
+    }
+);
 
 bot.dialog('showAlarm', [
     function (session) {
@@ -159,7 +172,28 @@ bot.dialog('showAlarm', [
             " Alarm time " + alarm.id);
 		}
     },
-]);
+    function(session, results){
+        if(results.response){
+            session.dialogData.room = results.response;
+            var msg = `Thank you`;
+            session.send(msg);
+            session.replaceDialog("mainMenu"); // Display the menu again.
+        }
+    }
+]).reloadAction(
+    "restartShowAlarm", "Ok. Let's start over.",
+    {
+        matches: /^start over$/i,
+        confirmPrompt: "This wil cancel your alarm. Are you sure?"
+    }
+)
+.cancelAction(
+    "cancelShowAlarm", "Type 'Main Menu' to continue.", 
+    {
+        matches: /^cancel$/i,
+        confirmPrompt: "This will cancel your alarm. Are you sure?"
+    }
+);
 
 bot.dialog('historcAlarm', [
     
