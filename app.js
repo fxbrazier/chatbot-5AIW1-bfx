@@ -1,6 +1,7 @@
 var restify = require('restify');
 var botbuilder = require('botbuilder');
 var reservation = require('./reservation');
+var alarm = require('./alarm');
 
 //setup restify server
 var server = restify.createServer();
@@ -21,7 +22,10 @@ server.post('/api/messages', connector.listen());
 var bot = new botbuilder.UniversalBot(connector, [
     function (session) {
         //session.beginDialog('ensureProfile', session.userData.profile);
-        session.beginDialog('reservation:reservationHostel');
+        //session.beginDialog('reservation:reservationHostel');
+        //session.beginDialog('alarm:createAlarm');
+        session.send("Welcome to your alarm");
+        session.beginDialog("mainMenu");
     }/*,
     function (session, results) {
         session.userData.profile = results.response; // Save user profile.
@@ -60,7 +64,7 @@ bot.library(reservation);
     }
 ]);*/
 
-/*bot.dialog('dinnerOrder', [
+bot.dialog('dinnerOrder', [
     (session) => {
         botbuilder.Prompts.text(session, "Hello... What's your name?");
     },
@@ -79,12 +83,93 @@ bot.library(reservation);
             " you've been programming for " + session.userData.coding +
             " years and use " + session.userData.language + ".");
     }
-]);*/
+]);
 
+// Main menu
+var menuItems = { 
+    "Create Alarm": {
+        item: "createAlarm"
+    },
+    "Show Alarm": {
+        item: "showAlarm"
+    },
+    "Historic Alarm": {
+        item: "historicAlarm"
+    },
+}
 
+// Display the main menu and start a new request depending on user input.
+bot.dialog("mainMenu", [
+    function(session){
+        botbuilder.Prompts.choice(session, "Main Menu:", menuItems);
+    },
+    function(session, results){
+        if(results.response){
+            session.beginDialog(menuItems[results.response.entity].item);
+        }
+    }
+])
+.triggerAction({
+    // The user can request this at any time.
+    // Once triggered, it clears the stack and prompts the main menu again.
+    matches: /^main menu$/i,
+    confirmPrompt: "This will cancel your request. Are you sure?"
+});
 
+bot.dialog('createAlarm', [
+    function (session) {
+        session.dialogData.alarm = {};
+        botbuilder.Prompts.text(session, "What would you like to name this alarm?");
+    },
+    function (session, results, next) {
+        if (results.response) {
+            session.dialogData.name = results.response;
+            botbuilder.Prompts.time(session, "What time would you like to set an alarm for?");
+        } else {
+            next();
+        }
+    },
+    function (session, results) {
+        if (results.response) {
+            session.dialogData.time = botbuilder.EntityRecognizer.resolveTime([results.response]);
+        }
 
-//message qd on tape quelque chose
-//ajout utilisateur : message avec id + nom
-//ajout bot : message avec id + nom
-//pareil pour quitter
+        // Return alarm to caller  
+        if (session.dialogData.name && session.dialogData.time) {
+        	session.dialogData.alarm.name = session.dialogData.name;
+        	session.dialogData.alarm.time = session.dialogData.time;
+            session.endDialogWithResult({ 
+                response: { name: session.dialogData.name, time: session.dialogData.time } 
+            }); 
+        } else {
+            session.endDialogWithResult({
+                resumed: botbuilder.ResumeReason.notCompleted
+            });
+        }
+    }
+]);
+
+bot.dialog('showAlarm', [
+    function (session) {
+        session.endDialogWithResult({ 
+                response: { name: session.dialogData.name, time: session.dialogData.time } 
+            }); 
+    },
+]);
+
+bot.dialog('historcAlarm', [
+    
+]);
+
+/*
+bot gerer des alarmes
+alarme : date + nom
+bonjour => liste des choix (menu)
+consulter les alarmes actives,
+historique alarmes actives et non, afficher sous forme liste ou rich card ou button => au click il affiche detail
+creer par qui, a quel heure, recap, name
+celle qui sont a venir
+
+trigger, reload, cancel, action
+un main menu
+ */
