@@ -151,9 +151,13 @@ bot.dialog('createAlarm', [
 
 bot.dialog('showAlarm', [
     function (session) {
-        session.endDialogWithResult({ 
-                response: { name: session.dialogData.name, time: session.dialogData.time } 
-            }); 
+    	var listAlarm;
+
+        for(var alarm in session.dialogData.alarm){
+		    console.log(alarm);
+		    session.send("Alarm name : " + alarm.name +
+            " Alarm time " + alarm.id);
+		}
     },
 ]);
 
